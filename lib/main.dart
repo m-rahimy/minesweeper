@@ -6,6 +6,9 @@ enum TileState { covered, blown, open, flagged, revealed }
 ///* use index +1 for difficulty multiplier
 enum Difficulty { HARD, MEDIUM, EASY }
 
+final int rows = 8;
+final int cols = 8;
+
 void main() => runApp(MineSweeper());
 
 class MineSweeper extends StatelessWidget {
@@ -25,8 +28,6 @@ class Board extends StatefulWidget {
 
 class BoardState extends State<Board> {
   static final difficulty = Difficulty.EASY;
-  final int rows = 8;
-  final int cols = 8;
   final int numOfMines = 8 + (8 * (1.0 / (difficulty.index + 1.0))).floor();
 
   List<List<TileState>> uiState;
@@ -131,4 +132,43 @@ Widget buildTile(Widget child, double size) {
     color: Colors.grey[400],
     child: child,
   );
+}
+
+
+class CoveredMineTile extends StatelessWidget {
+  final bool flagged;
+  final int posX;
+  final int posY;
+
+  const CoveredMineTile({Key key, this.flagged, this.posX, this.posY})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final size = (w - (2 * 10) - (rows * 4)) / rows;
+    Widget text;
+    if (flagged) {
+      text = buildInnerTile(RichText(
+        text: TextSpan(
+            text: "\u2691",
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            )),
+        textAlign: TextAlign.center,
+      ), size);
+    }
+
+    Widget innerTile = Container(
+      padding: EdgeInsets.all(1.0),
+      margin: EdgeInsets.all(2.0),
+      height: 20.0,
+      width: 20.0,
+      color: Colors.grey[350],
+      child: text,
+    );
+
+    return buildTile(innerTile, size);
+  }
 }
