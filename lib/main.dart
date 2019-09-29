@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 enum TileState { covered, blown, open, flagged, revealed }
 
 ///* use index +1 for difficulty multiplier
-enum Difficulty { HARD, MEDIUM, EASY  }
+enum Difficulty { HARD, MEDIUM, EASY }
 
 void main() => runApp(MineSweeper());
 
