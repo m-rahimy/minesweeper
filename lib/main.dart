@@ -64,8 +64,6 @@ class BoardState extends State<Board> {
   }
 
   Widget buildBoard(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-    final containerW = (w - (2 * 10) - (rows * 4)) / rows;
     List<Row> boardRow = <Row>[];
     for (int i = 0; i < rows; i++) {
       List<Widget> rowsChildren = <Widget>[];
@@ -86,6 +84,8 @@ class BoardState extends State<Board> {
               ),
             ),
           );
+        }else{
+          rowsChildren.add(OpenMineTile(state, 1));
         }
       }
       boardRow.add(Row(
@@ -157,14 +157,17 @@ class CoveredMineTile extends StatelessWidget {
     final size = (w - (2 * 10) - (rows * 4)) / rows;
     Widget text;
     if (!flagged) {
-      text = RichText(
-        text: TextSpan(
-            text: "\u2691",
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            )),
-        textAlign: TextAlign.center,
+      text = Center(
+        child: RichText(
+          text: TextSpan(
+              text: "\u2691",
+              style: TextStyle(
+                fontSize: size/2,
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              )),
+          textAlign: TextAlign.center,
+        ),
       );
     }
 
@@ -178,5 +181,54 @@ class CoveredMineTile extends StatelessWidget {
     );
 
     return buildTile(innerTile, size);
+  }
+}
+
+
+class OpenMineTile extends StatelessWidget {
+  final TileState state;
+  final int number;
+
+  OpenMineTile(this.state, this.number);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget text;
+
+    final w = MediaQuery.of(context).size.width;
+    final size = (w - (2 * 10) - (rows * 4)) / rows;
+
+    if (state == TileState.open) {
+      if (number != 0) {
+        text = Center(
+          child: RichText(
+            text: TextSpan(
+              text: '$number',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+                fontSize: size/2,
+              ),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        );
+      }
+    } else {
+      text = Center(
+        child: RichText(
+          text: TextSpan(
+            text: '\u2739',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: size/2,
+              color: Colors.red,
+            ),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    return buildInnerTile(text, size);
   }
 }
