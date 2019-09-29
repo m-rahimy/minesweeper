@@ -2,5 +2,5 @@
 .metadata
 .packages
 build/
-android/.gradle/*
+android/.gradle/
 
