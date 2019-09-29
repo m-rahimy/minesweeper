@@ -75,7 +75,7 @@ class BoardState extends State<Board> {
               onTap: () {
                 print('tapped on $i $j');
               },
-              child: Listener(child: buildInnerTile(Text('a'), containerW))));
+              child: Listener(child: buildInnerTile(buildTile(Text('a'), containerW), containerW))));
         }
       }
       boardRow.add(Row(
@@ -113,10 +113,22 @@ class BoardState extends State<Board> {
 
 Widget buildInnerTile(Widget child, double size) {
   return Container(
-      padding: EdgeInsets.all(1.0),
-      margin: EdgeInsets.all(2.0),
-      height: size,
-      width: size,
-      child: child,
-      color: Colors.grey,);
+    padding: EdgeInsets.all(1.0),
+    margin: EdgeInsets.all(2.0),
+    height: size,
+    width: size,
+    child: child,
+    color: Colors.grey,
+  );
+}
+
+Widget buildTile(Widget child, double size) {
+  return Container(
+    padding: EdgeInsets.all(1.0),
+    margin: EdgeInsets.all(2.0),
+    height: size,
+    width: size,
+    color: Colors.grey[400],
+    child: child,
+  );
 }
