@@ -70,18 +70,24 @@ class BoardState extends State<Board> {
       List<Widget> rowsChildren = <Widget>[];
       for (int j = 0; j < cols; j++) {
         TileState state = uiState[i][j];
-        if (state == TileState.covered) {
+        if (state == TileState.covered || state == TileState.flagged) {
           rowsChildren.add(GestureDetector(
               onTap: () {
                 print('tapped on $i $j');
               },
               child: Listener(
-                  child: Container(
-                width: containerW,
-                height: containerW,
-                margin: EdgeInsets.all(2.0),
-                color: Colors.grey,
+                  child: CoveredMineTile(
+                flagged: state == TileState.flagged,
+                posX: i,
+                posY: j,
               ))));
+        } else {
+          rowsChildren.add(
+            OpenMineTile(
+              state,
+              1,
+            ),
+          );
         }
       }
       boardRow.add(Row(
@@ -114,5 +120,101 @@ class BoardState extends State<Board> {
         ),
       ),
     );
+  }
+}
+
+Widget buildTile(Widget child) {
+  return Container(
+    padding: EdgeInsets.all(1.0),
+    margin: EdgeInsets.all(2.0),
+    height: 30.0,
+    width: 30.0,
+    color: Colors.grey[400],
+    child: child,
+  );
+}
+
+Widget buildInnerTile(Widget child) {
+  return Container(
+    padding: EdgeInsets.all(1.0),
+    margin: EdgeInsets.all(2.0),
+    height: 20.0,
+    width: 20.0,
+    child: child,
+  );
+}
+
+class CoveredMineTile extends StatelessWidget {
+  final bool flagged;
+  final int posX;
+  final int posY;
+
+  const CoveredMineTile({Key key, this.flagged, this.posX, this.posY})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget text;
+    if (flagged) {
+      text = buildInnerTile(RichText(
+        text: TextSpan(
+            text: "\u2691",
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            )),
+        textAlign: TextAlign.center,
+      ));
+    }
+
+    Widget innerTile = Container(
+      padding: EdgeInsets.all(1.0),
+      margin: EdgeInsets.all(2.0),
+      height: 20.0,
+      width: 20.0,
+      color: Colors.grey[350],
+      child: text,
+    );
+
+    return buildTile(innerTile);
+  }
+}
+
+class OpenMineTile extends StatelessWidget {
+  final TileState state;
+  final int number;
+
+  OpenMineTile(this.state, this.number);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget text;
+
+    if (state == TileState.open) {
+      if (number != 0) {
+        text = RichText(
+          text: TextSpan(
+            text: '$number',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
+          ),
+          textAlign: TextAlign.center,
+        );
+      }
+    } else {
+      text = RichText(
+        text: TextSpan(
+          text: '\u2739',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+          ),
+        ),
+        textAlign: TextAlign.center,
+      );
+    }
+    return buildTile(buildInnerTile(text));
   }
 }
