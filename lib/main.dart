@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 enum TileState { covered, blown, open, flagged, revealed }
 
 ///* use index +1 for difficulty multiplier
-enum Difficulty { HARD, MEDIUM, EASY  }
+enum Difficulty { HARD, MEDIUM, EASY }
 
 void main() => runApp(MineSweeper());
 
@@ -29,11 +30,29 @@ class BoardState extends State<Board> {
   final int numOfMines = 8 + (8 * (1.0 / (difficulty.index + 1.0))).floor();
 
   List<List<TileState>> uiState;
+  List<List<bool>> tiles;
 
   void resetBoard() {
     uiState = List<List<TileState>>.generate(rows, (row) {
       return List<TileState>.filled(cols, TileState.covered);
     });
+
+    tiles = List<List<bool>>.generate(rows, (row) {
+      return List<bool>.filled(cols, false);
+    });
+
+    Random random = Random();
+    int rem = numOfMines;
+    //TODO: add loading indicator
+    while (rem > 0) {
+      int pos = random.nextInt(rows * cols);
+      int r = pos ~/ rows;
+      int c = pos % cols;
+      if (!tiles[r][c]) {
+        tiles[r][c] = true;
+        rem--;
+      }
+    }
   }
 
   @override
