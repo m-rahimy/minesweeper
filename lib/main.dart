@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+
 enum TileState { covered, blown, open, flagged, revealed }
 
 ///* use index +1 for difficulty multiplier
@@ -35,7 +36,6 @@ class BoardState extends State<Board> {
     uiState = List<List<TileState>>.generate(rows, (row) {
       return List<TileState>.filled(cols, TileState.covered);
     });
-
 
     tiles = List<List<bool>>.generate(rows, (row) {
       return List<bool>.filled(cols, false);
@@ -75,13 +75,7 @@ class BoardState extends State<Board> {
               onTap: () {
                 print('tapped on $i $j');
               },
-              child: Listener(
-                  child: Container(
-                width: containerW,
-                height: containerW,
-                margin: EdgeInsets.all(2.0),
-                color: Colors.grey,
-              ))));
+              child: Listener(child: buildInnerTile(Text('a'), containerW))));
         }
       }
       boardRow.add(Row(
@@ -115,4 +109,14 @@ class BoardState extends State<Board> {
       ),
     );
   }
+}
+
+Widget buildInnerTile(Widget child, double size) {
+  return Container(
+      padding: EdgeInsets.all(1.0),
+      margin: EdgeInsets.all(2.0),
+      height: size,
+      width: size,
+      child: child,
+      color: Colors.grey,);
 }
