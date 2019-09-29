@@ -26,12 +26,14 @@ class Board extends StatefulWidget {
   BoardState createState() => BoardState();
 }
 
-class BoardState extends State<Board> {
+class BoardState extends State<Board> with TickerProviderStateMixin {
   static final difficulty = Difficulty.EASY;
   final int numOfMines = 8 + (8 * (1.0 / (difficulty.index + 1.0))).floor();
 
   List<List<TileState>> uiState;
   List<List<bool>> tiles;
+
+  AnimationController _controller;
 
   void resetBoard() {
     uiState = List<List<TileState>>.generate(rows, (row) {
@@ -54,44 +56,58 @@ class BoardState extends State<Board> {
         rem--;
       }
     }
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    );
+
   }
 
   @override
   void initState() {
     resetBoard();
-    print(numOfMines);
     super.initState();
   }
 
   Widget buildBoard(BuildContext context) {
     List<Row> boardRow = <Row>[];
-    for (int i = 0; i < rows; i++) {
+    for (int y = 0; y < rows; y++) {
       List<Widget> rowsChildren = <Widget>[];
-      for (int j = 0; j < cols; j++) {
-        TileState state = uiState[i][j];
+      for (int x = 0; x < cols; x++) {
+        TileState state = uiState[y][x];
+        int count = mineCount(x, y);
         if (state == TileState.covered || state == TileState.flagged) {
+          _controller.forward();
           rowsChildren.add(
             GestureDetector(
               onTap: () {
-                print('tapped on $i $j');
+                print('tapped on $y $x');
+                probe(x, y);
+              },
+              onLongPress: () {
+                flag(x, y);
               },
               child: Listener(
-                child: CoveredMineTile(
-                  flagged: state == TileState.flagged,
-                  posX: i,
-                  posY: j,
+                child: FadeTransition(
+                  opacity: _controller,
+                  child: CoveredMineTile(
+                    flagged: state == TileState.flagged,
+                    posX: x,
+                    posY: y,
+                  ),
                 ),
               ),
             ),
           );
-        }else{
-          rowsChildren.add(OpenMineTile(state, 1));
+        } else {
+          rowsChildren.add(OpenMineTile(state, count));
         }
       }
       boardRow.add(Row(
         children: rowsChildren,
         mainAxisAlignment: MainAxisAlignment.center,
-        key: ValueKey<int>(i),
+        key: ValueKey<int>(y),
       ));
     }
 
@@ -119,6 +135,61 @@ class BoardState extends State<Board> {
       ),
     );
   }
+
+  void probe(int x, int y) {
+    if (uiState[y][x] == TileState.flagged) return;
+    setState(() {
+      if (tiles[y][x]) {
+        uiState[y][x] = TileState.blown;
+      } else {
+        open(x, y);
+      }
+    });
+  }
+
+  void open(int x, int y) {
+    if (!inBoard(x, y)) return;
+    if (uiState[y][x] == TileState.open) return;
+    uiState[y][x] = TileState.open;
+
+    if (mineCount(x, y) > 0) return;
+
+    open(x + 1, y);
+    open(x - 1, y);
+    open(x, y + 1);
+    open(x, y - 1);
+    open(x - 1, y - 1);
+    open(x + 1, y + 1);
+    open(x - 1, y + 1);
+    open(x + 1, y - 1);
+  }
+
+  void flag(int x, int y) {
+    setState(() {
+      if (uiState[y][x] == TileState.flagged) {
+        uiState[y][x] = TileState.covered;
+      } else {
+        uiState[y][x] = TileState.flagged;
+      }
+    });
+  }
+
+  int mineCount(int x, int y) {
+    int count = 0;
+    count += bombs(x - 1, y);
+    count += bombs(x + 1, y);
+    count += bombs(x, y - 1);
+    count += bombs(x, y + 1);
+    count += bombs(x - 1, y - 1);
+    count += bombs(x + 1, y + 1);
+    count += bombs(x + 1, y - 1);
+    count += bombs(x - 1, y + 1);
+    return count;
+  }
+
+  int bombs(int x, int y) => inBoard(x, y) && tiles[y][x] ? 1 : 0;
+
+  bool inBoard(int x, int y) => x >= 0 && x < cols && y >= 0 && y < rows;
 }
 
 Widget buildInnerTile(Widget child, double size) {
@@ -156,13 +227,13 @@ class CoveredMineTile extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
     final size = (w - (2 * 10) - (rows * 4)) / rows;
     Widget text;
-    if (!flagged) {
+    if (flagged) {
       text = Center(
         child: RichText(
           text: TextSpan(
               text: "\u2691",
               style: TextStyle(
-                fontSize: size/2,
+                fontSize: size / 2,
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
               )),
@@ -184,12 +255,22 @@ class CoveredMineTile extends StatelessWidget {
   }
 }
 
-
 class OpenMineTile extends StatelessWidget {
   final TileState state;
   final int number;
 
   OpenMineTile(this.state, this.number);
+
+  final List textColor = [
+    Colors.blue,
+    Colors.green,
+    Colors.red,
+    Colors.purple,
+    Colors.cyan,
+    Colors.amber,
+    Colors.brown,
+    Colors.black,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -206,8 +287,8 @@ class OpenMineTile extends StatelessWidget {
               text: '$number',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.blue,
-                fontSize: size/2,
+                color: textColor[number-1],
+                fontSize: size / 2,
               ),
             ),
             textAlign: TextAlign.center,
@@ -221,7 +302,7 @@ class OpenMineTile extends StatelessWidget {
             text: '\u2739',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: size/2,
+              fontSize: size / 2,
               color: Colors.red,
             ),
           ),
