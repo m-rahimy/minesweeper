@@ -71,12 +71,21 @@ class BoardState extends State<Board> {
       List<Widget> rowsChildren = <Widget>[];
       for (int j = 0; j < cols; j++) {
         TileState state = uiState[i][j];
-        if (state == TileState.covered) {
-          rowsChildren.add(GestureDetector(
+        if (state == TileState.covered || state == TileState.flagged) {
+          rowsChildren.add(
+            GestureDetector(
               onTap: () {
                 print('tapped on $i $j');
               },
-              child: Listener(child: buildInnerTile(buildTile(Text('a'), containerW), containerW))));
+              child: Listener(
+                child: CoveredMineTile(
+                  flagged: state == TileState.flagged,
+                  posX: i,
+                  posY: j,
+                ),
+              ),
+            ),
+          );
         }
       }
       boardRow.add(Row(
@@ -134,7 +143,6 @@ Widget buildTile(Widget child, double size) {
   );
 }
 
-
 class CoveredMineTile extends StatelessWidget {
   final bool flagged;
   final int posX;
@@ -148,8 +156,8 @@ class CoveredMineTile extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
     final size = (w - (2 * 10) - (rows * 4)) / rows;
     Widget text;
-    if (flagged) {
-      text = buildInnerTile(RichText(
+    if (!flagged) {
+      text = RichText(
         text: TextSpan(
             text: "\u2691",
             style: TextStyle(
@@ -157,14 +165,14 @@ class CoveredMineTile extends StatelessWidget {
               fontWeight: FontWeight.bold,
             )),
         textAlign: TextAlign.center,
-      ), size);
+      );
     }
 
     Widget innerTile = Container(
       padding: EdgeInsets.all(1.0),
       margin: EdgeInsets.all(2.0),
-      height: 20.0,
-      width: 20.0,
+      height: size,
+      width: size,
       color: Colors.grey[350],
       child: text,
     );
