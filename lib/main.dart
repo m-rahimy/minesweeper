@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'dart:async';
+import 'package:flutter/services.dart';
 
 enum TileState { covered, blown, open, flagged, revealed }
 
@@ -9,7 +11,12 @@ enum Difficulty { HARD, MEDIUM, EASY }
 final int rows = 8;
 final int cols = 8;
 
-void main() => runApp(MineSweeper());
+void main() {
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
+    statusBarColor: Colors.grey[700], //or set color with: Color(0xFF0000FF)
+  ));
+  runApp(MineSweeper());
+}
 
 class MineSweeper extends StatelessWidget {
   @override
@@ -17,6 +24,12 @@ class MineSweeper extends StatelessWidget {
     return MaterialApp(
       title: 'Mine Sweaper',
       home: Board(),
+      theme: ThemeData(
+        appBarTheme: AppBarTheme(
+          elevation: 0.0,
+        ),
+        accentColor: Colors.red
+      ),
     );
   }
 }
@@ -28,14 +41,36 @@ class Board extends StatefulWidget {
 
 class BoardState extends State<Board> with TickerProviderStateMixin {
   static final difficulty = Difficulty.EASY;
-  final int numOfMines = 8 + (8 * (1.0 / (difficulty.index + 1.0))).floor();
+  static final int baseMines = 8;
+  final int numOfMines = baseMines + (baseMines * (1.0 / (difficulty.index + 1.0))).floor();
 
   List<List<TileState>> uiState;
   List<List<bool>> tiles;
 
   AnimationController _controller;
 
+  bool alive;
+  bool won;
+  int minesFound;
+  Timer timer;
+  Stopwatch stopwatch = Stopwatch();
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
   void resetBoard() {
+    alive = true;
+    won = false;
+    minesFound = 0;
+    stopwatch.reset();
+
+    timer?.cancel();
+    timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
+      setState(() {});
+    });
     uiState = List<List<TileState>>.generate(rows, (row) {
       return List<TileState>.filled(cols, TileState.covered);
     });
@@ -61,7 +96,6 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
       vsync: this,
       duration: Duration(seconds: 3),
     );
-
   }
 
   @override
@@ -71,19 +105,30 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
   }
 
   Widget buildBoard(BuildContext context) {
+    bool hasCoveredCell = false;
     List<Row> boardRow = <Row>[];
+    boardRow.add(Row());
     for (int y = 0; y < rows; y++) {
       List<Widget> rowsChildren = <Widget>[];
       for (int x = 0; x < cols; x++) {
         TileState state = uiState[y][x];
         int count = mineCount(x, y);
+
+        if (!alive) {
+          if (state != TileState.blown) {
+            state = tiles[y][x] ? TileState.revealed : state;
+          }
+        }
+
         if (state == TileState.covered || state == TileState.flagged) {
           _controller.forward();
           rowsChildren.add(
             GestureDetector(
               onTap: () {
                 print('tapped on $y $x');
-                probe(x, y);
+                if (state == TileState.covered) {
+                  probe(x, y);
+                }
               },
               onLongPress: () {
                 flag(x, y);
@@ -100,6 +145,9 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
               ),
             ),
           );
+          if (state == TileState.covered) {
+            hasCoveredCell = true;
+          }
         } else {
           rowsChildren.add(OpenMineTile(state, count));
         }
@@ -109,6 +157,13 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.center,
         key: ValueKey<int>(y),
       ));
+    }
+
+    if (!hasCoveredCell) {
+      if ((minesFound == numOfMines) && alive) {
+        won = true;
+        stopwatch.stop();
+      }
     }
 
     return Container(
@@ -122,27 +177,75 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Mine Sweeper'),
-      ),
-      body: Container(
-        color: Colors.grey[50],
-        child: Center(
-          child: buildBoard(context),
+    int timeElapsed = stopwatch.elapsedMilliseconds ~/ 1000;
+    return SafeArea(
+      child: Scaffold(
+        resizeToAvoidBottomPadding: false,
+        appBar: AppBar(
+          elevation: 0,
+          centerTitle: true,
+          title: Text('مین‌روب'),
+          backgroundColor: Colors.grey[700],
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(45.0),
+            child: Row(
+              textDirection: TextDirection.rtl,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: OutlineButton(
+                    borderSide: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(),
+                    child: Text(
+                      "از اول",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: ()=> resetBoard(),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    color: Colors.grey[700],
+                    alignment: Alignment.center,
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(color: won? Colors.green : alive ? Colors.white : Colors.red),
+                        text: won
+                            ? "بردی بازی رو! در $timeElapsed  ثانیه"
+                            : alive
+                            ? "[مین‌ها: $minesFound از $numOfMines] [$timeElapsed ثانیه]"
+                            : "باختی! $timeElapsed  ثانیه",
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+        body: Center(
+          child: Container(
+            color: Colors.grey[50],
+            child: Center(
+              child: buildBoard(context),
+            ),
+          ),
         ),
       ),
     );
   }
 
   void probe(int x, int y) {
+    if (!alive) return;
     if (uiState[y][x] == TileState.flagged) return;
     setState(() {
       if (tiles[y][x]) {
         uiState[y][x] = TileState.blown;
+        alive = false;
+        timer.cancel();
       } else {
         open(x, y);
+        if (!stopwatch.isRunning) stopwatch.start();
       }
     });
   }
@@ -165,11 +268,14 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
   }
 
   void flag(int x, int y) {
+    if (!alive) return;
     setState(() {
       if (uiState[y][x] == TileState.flagged) {
         uiState[y][x] = TileState.covered;
+        --minesFound;
       } else {
         uiState[y][x] = TileState.flagged;
+        ++minesFound;
       }
     });
   }
@@ -287,7 +393,7 @@ class OpenMineTile extends StatelessWidget {
               text: '$number',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: textColor[number-1],
+                color: textColor[number - 1],
                 fontSize: size / 2,
               ),
             ),
