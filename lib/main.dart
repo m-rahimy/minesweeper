@@ -25,11 +25,11 @@ class MineSweeper extends StatelessWidget {
       title: 'Mine Sweaper',
       home: Board(),
       theme: ThemeData(
-        appBarTheme: AppBarTheme(
-          elevation: 0.0,
-        ),
-        accentColor: Colors.red
-      ),
+          fontFamily: 'IranSans',
+          appBarTheme: AppBarTheme(
+            elevation: 0.0,
+          ),
+          accentColor: Colors.red),
     );
   }
 }
@@ -42,7 +42,8 @@ class Board extends StatefulWidget {
 class BoardState extends State<Board> with TickerProviderStateMixin {
   static final difficulty = Difficulty.EASY;
   static final int baseMines = 8;
-  final int numOfMines = baseMines + (baseMines * (1.0 / (difficulty.index + 1.0))).floor();
+  final int numOfMines =
+      baseMines + (baseMines * (1.0 / (difficulty.index + 1.0))).floor();
 
   List<List<TileState>> uiState;
   List<List<bool>> tiles;
@@ -149,7 +150,10 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
             hasCoveredCell = true;
           }
         } else {
-          rowsChildren.add(OpenMineTile(state, count));
+          rowsChildren.add(OpenMineTile(state, count, () {
+            print("clicked on $count, at ($x,$y)");
+            openNeighbours(x, y, count);
+          }));
         }
       }
       boardRow.add(Row(
@@ -184,7 +188,7 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
         appBar: AppBar(
           elevation: 0,
           centerTitle: true,
-          title: Text('مین‌روب'),
+          title: Text('مین ‌روب'),
           backgroundColor: Colors.grey[700],
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(45.0),
@@ -200,7 +204,7 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                       "از اول",
                       style: TextStyle(color: Colors.white),
                     ),
-                    onPressed: ()=> resetBoard(),
+                    onPressed: () => resetBoard(),
                   ),
                 ),
                 Expanded(
@@ -209,12 +213,16 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                     alignment: Alignment.center,
                     child: RichText(
                       text: TextSpan(
-                        style: TextStyle(color: won? Colors.green : alive ? Colors.white : Colors.red),
+                        style: TextStyle(
+                            color: won
+                                ? Colors.green
+                                : alive ? Colors.white : Colors.red,
+                            fontFamily: 'IranSans'),
                         text: won
                             ? "بردی بازی رو! در $timeElapsed  ثانیه"
                             : alive
-                            ? "[مین‌ها: $minesFound از $numOfMines] [$timeElapsed ثانیه]"
-                            : "باختی! $timeElapsed  ثانیه",
+                                ? "[مین‌ها: $minesFound از $numOfMines] [$timeElapsed ثانیه]"
+                                : "باختی! $timeElapsed  ثانیه",
                       ),
                     ),
                   ),
@@ -265,6 +273,23 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     open(x + 1, y + 1);
     open(x - 1, y + 1);
     open(x + 1, y - 1);
+  }
+
+  void openNeighbours(int x, int y, int count) {
+    openJustNeighbours(x + 1, y);
+    openJustNeighbours(x - 1, y);
+    openJustNeighbours(x, y + 1);
+    openJustNeighbours(x, y - 1);
+    openJustNeighbours(x - 1, y - 1);
+    openJustNeighbours(x + 1, y + 1);
+    openJustNeighbours(x - 1, y + 1);
+    openJustNeighbours(x + 1, y - 1);
+  }
+
+  void openJustNeighbours(int x, int y) {
+    if (!inBoard(x, y)) return;
+    if (uiState[y][x] == TileState.flagged) return;
+    uiState[y][x] = TileState.open;
   }
 
   void flag(int x, int y) {
@@ -364,8 +389,9 @@ class CoveredMineTile extends StatelessWidget {
 class OpenMineTile extends StatelessWidget {
   final TileState state;
   final int number;
+  final Function() onLongPress;
 
-  OpenMineTile(this.state, this.number);
+  OpenMineTile(this.state, this.number, this.onLongPress);
 
   final List textColor = [
     Colors.blue,
@@ -387,6 +413,7 @@ class OpenMineTile extends StatelessWidget {
 
     if (state == TileState.open) {
       if (number != 0) {
+        ///number
         text = Center(
           child: RichText(
             text: TextSpan(
@@ -402,6 +429,7 @@ class OpenMineTile extends StatelessWidget {
         );
       }
     } else {
+      ///bomb
       text = Center(
         child: RichText(
           text: TextSpan(
@@ -416,6 +444,10 @@ class OpenMineTile extends StatelessWidget {
         ),
       );
     }
-    return buildInnerTile(text, size);
+    return GestureDetector(
+        onLongPress: () {
+          onLongPress();
+        },
+        child: buildInnerTile(text, size));
   }
 }
