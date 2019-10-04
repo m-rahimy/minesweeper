@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:async';
@@ -54,6 +55,8 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
   int minesFound;
   Timer timer;
   Stopwatch stopwatch = Stopwatch();
+
+  var scaffoldKey = GlobalKey(debugLabel: "parentScaffold");
 
   @override
   void dispose() {
@@ -223,7 +226,7 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
           }
         } else {
           rowsChildren.add(OpenMineTile(state, count, () {
-            openNeighbours(x, y, count);
+            openNeighbours(x, y, count, context);
           }));
         }
       }
@@ -255,6 +258,7 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     int timeElapsed = stopwatch.elapsedMilliseconds ~/ 1000;
     return SafeArea(
       child: Scaffold(
+        key: scaffoldKey,
         resizeToAvoidBottomPadding: false,
         appBar: AppBar(
           elevation: 0,
@@ -358,7 +362,29 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     open(x + 1, y - 1);
   }
 
-  void openNeighbours(int x, int y, int count) {
+  void openNeighbours(int x, int y, int count, BuildContext context) {
+    int nfc = neighboursFlagCount(x, y);
+    String baseText = 'خطر، $count عدد مین در اطراف وجود دارد اما ';
+    if (nfc < count) {
+      (scaffoldKey.currentState as ScaffoldState).showSnackBar(
+        SnackBar(
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                nfc == 0
+                    ? '$baseText هیچی پیدا نشده '
+                    : nfc == 1
+                        ? '$baseText فقط $nfc دونه پیدا شده '
+                        : '$baseText فقط $nfc تا پیدا شده ',
+                textDirection: TextDirection.ltr,
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
     openJustNeighbours(x + 1, y);
     openJustNeighbours(x - 1, y);
     openJustNeighbours(x, y + 1);
@@ -412,6 +438,21 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
       numOfMines = calcDiff(baseMines, difficulty);
     });
     resetBoard();
+  }
+
+  int neighboursFlagCount(int x, int y) {
+    if (!inBoard(x, y)) return 1000;
+    int count = 0;
+    if (uiState[y][x + 1] == TileState.flagged) count++;
+    if (uiState[y][x - 1] == TileState.flagged) count++;
+    if (uiState[y + 1][x] == TileState.flagged) count++;
+    if (uiState[y - 1][x] == TileState.flagged) count++;
+    if (uiState[y - 1][x - 1] == TileState.flagged) count++;
+    if (uiState[y + 1][x + 1] == TileState.flagged) count++;
+    if (uiState[y + 1][x - 1] == TileState.flagged) count++;
+    if (uiState[y - 1][x + 1] == TileState.flagged) count++;
+
+    return count;
   }
 }
 
