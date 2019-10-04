@@ -335,9 +335,7 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     if (uiState[y][x] == TileState.flagged) return;
     setState(() {
       if (tiles[y][x]) {
-        uiState[y][x] = TileState.blown;
-        alive = false;
-        timer.cancel();
+        die(y, x);
       } else {
         open(x, y);
         if (!stopwatch.isRunning) stopwatch.start();
@@ -385,20 +383,29 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
       );
       return;
     }
-    openJustNeighbours(x + 1, y);
-    openJustNeighbours(x - 1, y);
-    openJustNeighbours(x, y + 1);
-    openJustNeighbours(x, y - 1);
-    openJustNeighbours(x - 1, y - 1);
-    openJustNeighbours(x + 1, y + 1);
-    openJustNeighbours(x - 1, y + 1);
-    openJustNeighbours(x + 1, y - 1);
+
+    if(openJustNeighbours(x + 1, y)) return;
+    if(openJustNeighbours(x - 1, y)) return;
+    if(openJustNeighbours(x, y + 1)) return;
+    if(openJustNeighbours(x, y - 1)) return;
+    if(openJustNeighbours(x - 1, y - 1)) return;
+    if(openJustNeighbours(x + 1, y + 1)) return;
+    if(openJustNeighbours(x - 1, y + 1)) return;
+    if(openJustNeighbours(x + 1, y - 1)) return;
   }
 
-  void openJustNeighbours(int x, int y) {
-    if (!inBoard(x, y)) return;
-    if (uiState[y][x] == TileState.flagged) return;
+  bool openJustNeighbours(int x, int y) {
+    if (!inBoard(x, y)) return false;
+    if (uiState[y][x] == TileState.flagged) return false;
+    if (uiState[y][x] == TileState.open) return false;
+    if (tiles[y][x]) {
+      setState(() {
+        die(y, x);
+      });
+      return true;
+    }
     uiState[y][x] = TileState.open;
+    return false;
   }
 
   void flag(int x, int y) {
@@ -441,18 +448,40 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
   }
 
   int neighboursFlagCount(int x, int y) {
-    if (!inBoard(x, y)) return 1000;
     int count = 0;
-    if (uiState[y][x + 1] == TileState.flagged) count++;
-    if (uiState[y][x - 1] == TileState.flagged) count++;
-    if (uiState[y + 1][x] == TileState.flagged) count++;
-    if (uiState[y - 1][x] == TileState.flagged) count++;
-    if (uiState[y - 1][x - 1] == TileState.flagged) count++;
-    if (uiState[y + 1][x + 1] == TileState.flagged) count++;
-    if (uiState[y + 1][x - 1] == TileState.flagged) count++;
-    if (uiState[y - 1][x + 1] == TileState.flagged) count++;
+    if (!inBoard(x, y)) return count;
+    try {
+      if (uiState[y][x + 1] == TileState.flagged) count++;
+    } catch (e) {}
+    try {
+      if (uiState[y][x - 1] == TileState.flagged) count++;
+    } catch (e) {}
+    try {
+      if (uiState[y + 1][x] == TileState.flagged) count++;
+    } catch (e) {}
+    try {
+      if (uiState[y - 1][x] == TileState.flagged) count++;
+    } catch (e) {}
+    try {
+      if (uiState[y - 1][x - 1] == TileState.flagged) count++;
+    } catch (e) {}
+    try {
+      if (uiState[y + 1][x + 1] == TileState.flagged) count++;
+    } catch (e) {}
+    try {
+      if (uiState[y + 1][x - 1] == TileState.flagged) count++;
+    } catch (e) {}
+    try {
+      if (uiState[y - 1][x + 1] == TileState.flagged) count++;
+    } catch (e) {}
 
     return count;
+  }
+
+  void die(int y, int x) {
+    uiState[y][x] = TileState.blown;
+    alive = false;
+    timer.cancel();
   }
 }
 
