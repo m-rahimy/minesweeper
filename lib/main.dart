@@ -70,6 +70,15 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
         context: context,
         builder: (b) {
           return Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[700],
+              border: Border(
+                top: BorderSide(
+                  width: 1.0,
+                  color: Colors.white,
+                ),
+              ),
+            ),
             child: Row(
               textDirection: TextDirection.rtl,
               children: <Widget>[
@@ -78,12 +87,12 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
-                      Text('آسان'),
+                      Text('آسان', style: TextStyle(color: Colors.white),),
                       Radio(
                         value: Difficulty.EASY,
                         groupValue: difficulty,
                         onChanged: (Difficulty diff) {
-                          changeDifficultyState(diff);
+                          changeDifficultyState(diff, true);
                         },
                         activeColor: Colors.green,
                       ),
@@ -94,12 +103,12 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: <Widget>[
-                      Text('متوسط'),
+                      Text('متوسط', style: TextStyle(color: Colors.white),),
                       Radio(
                         value: Difficulty.MEDIUM,
                         groupValue: difficulty,
                         onChanged: (Difficulty diff) {
-                          changeDifficultyState(diff);
+                          changeDifficultyState(diff, true);
                         },
                         activeColor: Colors.orange,
                       ),
@@ -110,12 +119,12 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: <Widget>[
-                      Text('سخت'),
+                      Text('سخت', style: TextStyle(color: Colors.white),),
                       Radio(
                         value: Difficulty.HARD,
                         groupValue: difficulty,
                         onChanged: (Difficulty diff) {
-                          changeDifficultyState(diff);
+                          changeDifficultyState(diff, true);
                         },
                         activeColor: Colors.red,
                       ),
@@ -436,8 +445,9 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
 
   bool inBoard(int x, int y) => x >= 0 && x < cols && y >= 0 && y < rows;
 
-  void changeDifficultyState(diff) {
+  void changeDifficultyState(Difficulty diff, bool pop) {
     if (diff == difficulty) return;
+    if (pop) Navigator.pop(context);
     setState(() {
       difficulty = diff;
       numOfMines = calcDiff(baseMines, difficulty);
