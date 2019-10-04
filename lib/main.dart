@@ -8,8 +8,8 @@ enum TileState { covered, blown, open, flagged, revealed }
 ///* use index +1 for difficulty multiplier
 enum Difficulty { HARD, MEDIUM, EASY }
 
-final int rows = 8;
-final int cols = 8;
+int rows = 8;
+int cols = 8;
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
@@ -40,10 +40,9 @@ class Board extends StatefulWidget {
 }
 
 class BoardState extends State<Board> with TickerProviderStateMixin {
-  static final difficulty = Difficulty.EASY;
+  var difficulty = Difficulty.EASY;
   static final int baseMines = 8;
-  final int numOfMines =
-      baseMines + (baseMines * (1.0 / (difficulty.index + 1.0))).floor();
+  int numOfMines = calcDiff(baseMines, Difficulty.EASY);
 
   List<List<TileState>> uiState;
   List<List<bool>> tiles;
@@ -59,7 +58,78 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
   @override
   void dispose() {
     timer?.cancel();
+    _controller.dispose();
     super.dispose();
+  }
+
+  void showSettings() {
+    showModalBottomSheet(
+        context: context,
+        builder: (b) {
+          return Container(
+              color: Colors.grey[200],
+              padding: EdgeInsets.all(10.0),
+              child: ListView(
+                children: <Widget>[
+                  Container(
+                    child: Row(
+                      textDirection: TextDirection.rtl,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              Text('آسان'),
+                              Radio(
+                                value: Difficulty.EASY,
+                                groupValue: difficulty,
+                                onChanged: (Difficulty diff) {
+                                  changeDifficultyState(diff);
+                                },
+                                activeColor: Colors.green,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: <Widget>[
+                              Text('متوسط'),
+                              Radio(
+                                value: Difficulty.MEDIUM,
+                                groupValue: difficulty,
+                                onChanged: (Difficulty diff) {
+                                  changeDifficultyState(diff);
+                                },
+                                activeColor: Colors.orange,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: <Widget>[
+                              Text('سخت'),
+                              Radio(
+                                value: Difficulty.HARD,
+                                groupValue: difficulty,
+                                onChanged: (Difficulty diff) {
+                                  changeDifficultyState(diff);
+                                },
+                                activeColor: Colors.red,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ));
+        });
   }
 
   void resetBoard() {
@@ -72,6 +142,8 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
       setState(() {});
     });
+
+    rows = numOfMines;
     uiState = List<List<TileState>>.generate(rows, (row) {
       return List<TileState>.filled(cols, TileState.covered);
     });
@@ -83,6 +155,8 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     Random random = Random();
     int rem = numOfMines;
     //TODO: add loading indicator
+    _controller.reset();
+    _controller.forward();
     while (rem > 0) {
       int pos = random.nextInt(rows * cols);
       int r = pos ~/ rows;
@@ -92,15 +166,14 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
         rem--;
       }
     }
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 3),
-    );
   }
 
   @override
   void initState() {
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 1),
+    );
     resetBoard();
     super.initState();
   }
@@ -122,11 +195,9 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
         }
 
         if (state == TileState.covered || state == TileState.flagged) {
-          _controller.forward();
           rowsChildren.add(
             GestureDetector(
               onTap: () {
-                print('tapped on $y $x');
                 if (state == TileState.covered) {
                   probe(x, y);
                 }
@@ -151,7 +222,6 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
           }
         } else {
           rowsChildren.add(OpenMineTile(state, count, () {
-            print("clicked on $count, at ($x,$y)");
             openNeighbours(x, y, count);
           }));
         }
@@ -173,7 +243,7 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     return Container(
       color: Colors.grey[700],
       padding: EdgeInsets.all(10.0),
-      child: Column(
+      child: ListView(
         children: boardRow,
       ),
     );
@@ -205,6 +275,18 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                       style: TextStyle(color: Colors.white),
                     ),
                     onPressed: () => resetBoard(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: OutlineButton(
+                    borderSide: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(),
+                    child: Text(
+                      "تنظیمات",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () => showSettings(),
                   ),
                 ),
                 Expanded(
@@ -321,6 +403,19 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
   int bombs(int x, int y) => inBoard(x, y) && tiles[y][x] ? 1 : 0;
 
   bool inBoard(int x, int y) => x >= 0 && x < cols && y >= 0 && y < rows;
+
+  void changeDifficultyState(diff) {
+    if (diff == difficulty) return;
+    setState(() {
+      difficulty = diff;
+      numOfMines = calcDiff(baseMines, difficulty);
+    });
+    resetBoard();
+  }
+}
+
+int calcDiff(baseMines, Difficulty difficulty) {
+  return baseMines + (baseMines * (1.0 / (difficulty.index + 1.0))).floor();
 }
 
 Widget buildInnerTile(Widget child, double size) {
@@ -356,7 +451,7 @@ class CoveredMineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final size = (w - (2 * 10) - (rows * 4)) / rows;
+    final size = calcWidth(w);
     Widget text;
     if (flagged) {
       text = Center(
@@ -386,12 +481,16 @@ class CoveredMineTile extends StatelessWidget {
   }
 }
 
+calcWidth(w) {
+  return (w - (2 * 10) - (cols * 4)) / cols;
+}
+
 class OpenMineTile extends StatelessWidget {
   final TileState state;
   final int number;
-  final Function() onLongPress;
+  final Function() onDoubleTap;
 
-  OpenMineTile(this.state, this.number, this.onLongPress);
+  OpenMineTile(this.state, this.number, this.onDoubleTap);
 
   final List textColor = [
     Colors.blue,
@@ -409,7 +508,7 @@ class OpenMineTile extends StatelessWidget {
     Widget text;
 
     final w = MediaQuery.of(context).size.width;
-    final size = (w - (2 * 10) - (rows * 4)) / rows;
+    final size = calcWidth(w);
 
     if (state == TileState.open) {
       if (number != 0) {
@@ -445,8 +544,8 @@ class OpenMineTile extends StatelessWidget {
       );
     }
     return GestureDetector(
-        onLongPress: () {
-          onLongPress();
+        onDoubleTap: () {
+          onDoubleTap();
         },
         child: buildInnerTile(text, size));
   }
