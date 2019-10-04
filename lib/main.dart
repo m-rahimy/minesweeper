@@ -143,7 +143,9 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
       setState(() {});
     });
 
-    rows = numOfMines;
+    setState(() {
+      rows = numOfMines;
+    });
     uiState = List<List<TileState>>.generate(rows, (row) {
       return List<TileState>.filled(cols, TileState.covered);
     });
@@ -158,9 +160,8 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
     _controller.reset();
     _controller.forward();
     while (rem > 0) {
-      int pos = random.nextInt(rows * cols);
-      int r = pos ~/ rows;
-      int c = pos % cols;
+      int r = random.nextInt(rows);
+      int c = random.nextInt(cols);
       if (!tiles[r][c]) {
         tiles[r][c] = true;
         rem--;
