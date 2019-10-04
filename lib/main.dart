@@ -70,68 +70,61 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
         context: context,
         builder: (b) {
           return Container(
-              color: Colors.grey[200],
-              padding: EdgeInsets.all(10.0),
-              child: ListView(
-                children: <Widget>[
-                  Container(
-                    child: Row(
-                      textDirection: TextDirection.rtl,
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: <Widget>[
-                              Text('آسان'),
-                              Radio(
-                                value: Difficulty.EASY,
-                                groupValue: difficulty,
-                                onChanged: (Difficulty diff) {
-                                  changeDifficultyState(diff);
-                                },
-                                activeColor: Colors.green,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: <Widget>[
-                              Text('متوسط'),
-                              Radio(
-                                value: Difficulty.MEDIUM,
-                                groupValue: difficulty,
-                                onChanged: (Difficulty diff) {
-                                  changeDifficultyState(diff);
-                                },
-                                activeColor: Colors.orange,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: <Widget>[
-                              Text('سخت'),
-                              Radio(
-                                value: Difficulty.HARD,
-                                groupValue: difficulty,
-                                onChanged: (Difficulty diff) {
-                                  changeDifficultyState(diff);
-                                },
-                                activeColor: Colors.red,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+            child: Row(
+              textDirection: TextDirection.rtl,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text('آسان'),
+                      Radio(
+                        value: Difficulty.EASY,
+                        groupValue: difficulty,
+                        onChanged: (Difficulty diff) {
+                          changeDifficultyState(diff);
+                        },
+                        activeColor: Colors.green,
+                      ),
+                    ],
                   ),
-                ],
-              ));
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: <Widget>[
+                      Text('متوسط'),
+                      Radio(
+                        value: Difficulty.MEDIUM,
+                        groupValue: difficulty,
+                        onChanged: (Difficulty diff) {
+                          changeDifficultyState(diff);
+                        },
+                        activeColor: Colors.orange,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: <Widget>[
+                      Text('سخت'),
+                      Radio(
+                        value: Difficulty.HARD,
+                        groupValue: difficulty,
+                        onChanged: (Difficulty diff) {
+                          changeDifficultyState(diff);
+                        },
+                        activeColor: Colors.red,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
         });
   }
 
@@ -288,7 +281,11 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                     borderSide: BorderSide(color: Colors.white),
                     shape: RoundedRectangleBorder(),
                     child: Text(
-                      "تنظیمات",
+                      difficulty == Difficulty.EASY
+                          ? "آسونه"
+                          : difficulty == Difficulty.MEDIUM
+                              ? "سخت نیست"
+                              : difficulty == Difficulty.HARD ? "سخته" : "",
                       style: TextStyle(color: Colors.white),
                     ),
                     onPressed: () => showSettings(),
@@ -362,7 +359,8 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
 
   void openNeighbours(int x, int y, int count, BuildContext context) {
     int nfc = neighboursFlagCount(x, y);
-    String baseText = 'خطر، $count عدد مین در اطراف وجود دارد اما ';
+    String counter = count == 1 ? "دونه" : "تا";
+    String baseText = 'خطر، $count $counter مین دورش داریم اما ';
     if (nfc < count) {
       (scaffoldKey.currentState as ScaffoldState).showSnackBar(
         SnackBar(
@@ -384,14 +382,14 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
       return;
     }
 
-    if(openJustNeighbours(x + 1, y)) return;
-    if(openJustNeighbours(x - 1, y)) return;
-    if(openJustNeighbours(x, y + 1)) return;
-    if(openJustNeighbours(x, y - 1)) return;
-    if(openJustNeighbours(x - 1, y - 1)) return;
-    if(openJustNeighbours(x + 1, y + 1)) return;
-    if(openJustNeighbours(x - 1, y + 1)) return;
-    if(openJustNeighbours(x + 1, y - 1)) return;
+    if (openJustNeighbours(x + 1, y)) return;
+    if (openJustNeighbours(x - 1, y)) return;
+    if (openJustNeighbours(x, y + 1)) return;
+    if (openJustNeighbours(x, y - 1)) return;
+    if (openJustNeighbours(x - 1, y - 1)) return;
+    if (openJustNeighbours(x + 1, y + 1)) return;
+    if (openJustNeighbours(x - 1, y + 1)) return;
+    if (openJustNeighbours(x + 1, y - 1)) return;
   }
 
   bool openJustNeighbours(int x, int y) {
