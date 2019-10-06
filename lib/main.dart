@@ -7,7 +7,12 @@ import 'package:flutter/services.dart';
 enum TileState { covered, blown, open, flagged, revealed }
 
 ///* use index +1 for difficulty multiplier
-enum Difficulty { HARD, MEDIUM, EASY }
+enum Difficulty {
+  INSANE,
+  HARD,
+  MEDIUM,
+  EASY,
+}
 
 int rows = 8;
 int cols = 8;
@@ -87,7 +92,10 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
-                      Text('آسان', style: TextStyle(color: Colors.white),),
+                      Text(
+                        'آسان',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       Radio(
                         value: Difficulty.EASY,
                         groupValue: difficulty,
@@ -103,7 +111,10 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: <Widget>[
-                      Text('متوسط', style: TextStyle(color: Colors.white),),
+                      Text(
+                        'متوسط',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       Radio(
                         value: Difficulty.MEDIUM,
                         groupValue: difficulty,
@@ -119,9 +130,31 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: <Widget>[
-                      Text('سخت', style: TextStyle(color: Colors.white),),
+                      Text(
+                        'سخت',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       Radio(
                         value: Difficulty.HARD,
+                        groupValue: difficulty,
+                        onChanged: (Difficulty diff) {
+                          changeDifficultyState(diff, true);
+                        },
+                        activeColor: Colors.red,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: <Widget>[
+                      Text(
+                        'نامردی',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      Radio(
+                        value: Difficulty.INSANE,
                         groupValue: difficulty,
                         onChanged: (Difficulty diff) {
                           changeDifficultyState(diff, true);
@@ -294,7 +327,9 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                           ? "آسونه"
                           : difficulty == Difficulty.MEDIUM
                               ? "سخت نیست"
-                              : difficulty == Difficulty.HARD ? "سخته" : "",
+                              : difficulty == Difficulty.HARD
+                                  ? "سخته"
+                                  : "نامردیه",
                       style: TextStyle(color: Colors.white),
                     ),
                     onPressed: () => showSettings(),
@@ -494,7 +529,9 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
 }
 
 int calcDiff(baseMines, Difficulty difficulty) {
-  return baseMines + (baseMines * (1.0 / (difficulty.index + 1.0))).floor();
+  var mines =  baseMines + (baseMines * (1.0 / (difficulty.index + 1.0))).floor();
+  if(difficulty == Difficulty.INSANE) mines*= 2;
+  return mines;
 }
 
 Widget buildInnerTile(Widget child, double size) {
