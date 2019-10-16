@@ -87,7 +87,10 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
-                      Text('آسان', style: TextStyle(color: Colors.white),),
+                      Text(
+                        'آسان',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       Radio(
                         value: Difficulty.EASY,
                         groupValue: difficulty,
@@ -103,7 +106,10 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: <Widget>[
-                      Text('متوسط', style: TextStyle(color: Colors.white),),
+                      Text(
+                        'متوسط',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       Radio(
                         value: Difficulty.MEDIUM,
                         groupValue: difficulty,
@@ -119,7 +125,10 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: <Widget>[
-                      Text('سخت', style: TextStyle(color: Colors.white),),
+                      Text(
+                        'سخت',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       Radio(
                         value: Difficulty.HARD,
                         groupValue: difficulty,
@@ -203,12 +212,15 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
         if (state == TileState.covered || state == TileState.flagged) {
           rowsChildren.add(
             GestureDetector(
-              onTap: () {
+              onTapUp: (d) {
                 if (state == TileState.covered) {
                   probe(x, y);
                 }
               },
               onLongPress: () {
+                flag(x, y);
+              },
+              onDoubleTap: () {
                 flag(x, y);
               },
               child: Listener(
