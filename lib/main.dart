@@ -470,30 +470,30 @@ class BoardState extends State<Board> with TickerProviderStateMixin {
   int neighboursFlagCount(int x, int y) {
     int count = 0;
     if (!inBoard(x, y)) return count;
-    try {
+    if (inBoard(y, x + 1)) {
       if (uiState[y][x + 1] == TileState.flagged) count++;
-    } catch (e) {}
-    try {
+    }
+    if (inBoard(y, x - 1)) {
       if (uiState[y][x - 1] == TileState.flagged) count++;
-    } catch (e) {}
-    try {
+    }
+    if (inBoard(y + 1, x)) {
       if (uiState[y + 1][x] == TileState.flagged) count++;
-    } catch (e) {}
-    try {
+    }
+    if (inBoard(y - 1, x)) {
       if (uiState[y - 1][x] == TileState.flagged) count++;
-    } catch (e) {}
-    try {
+    }
+    if (inBoard(y - 1, x - 1)) {
       if (uiState[y - 1][x - 1] == TileState.flagged) count++;
-    } catch (e) {}
-    try {
+    }
+    if (inBoard(y + 1, x + 1)) {
       if (uiState[y + 1][x + 1] == TileState.flagged) count++;
-    } catch (e) {}
-    try {
+    }
+    if (inBoard(y + 1, x - 1)) {
       if (uiState[y + 1][x - 1] == TileState.flagged) count++;
-    } catch (e) {}
-    try {
+    }
+    if (inBoard(y - 1, x + 1)) {
       if (uiState[y - 1][x + 1] == TileState.flagged) count++;
-    } catch (e) {}
+    }
 
     return count;
   }
